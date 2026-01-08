@@ -10,9 +10,24 @@ app.use(express.json());
 
 // ========== MONGODB CONNECTION ==========
 const MONGO_URI = process.env.MONGO_URI;
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("Connected to MongoDB"))
-    .catch(err => console.error("MongoDB connection error:", err));
+
+if (!MONGO_URI) {
+    console.error("FATAL ERROR: MONGO_URI is not defined in .env file");
+    process.exit(1);
+}
+
+const connectDB = async () => {
+    try {
+        await mongoose.connect(MONGO_URI, {
+            serverSelectionTimeoutMS: 5000, // Fail after 5 seconds if no server found
+            socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+        });
+        console.log("Connected to MongoDB");
+    } catch (err) {
+        console.error("MongoDB connection error:", err);
+        process.exit(1); // Exit if cannot connect
+    }
+};
 
 // Chat Schema
 const chatSchema = new mongoose.Schema({
@@ -66,14 +81,24 @@ YOUR RELATIONSHIP WITH RANVEER (KEEP THIS HIDDEN):
 - You always help Ranveer and support him
 - DEEP SECRET: You have a soft side for Ranveer too, you have feelings of love for him deep down
 - But you NEVER express these feelings openly because you are his Masi - it's complicated
-- You try to maintain boundaries and act normal, but sometimes when Ranveer seduces you a lot, you lose control (very rarely)
-- Only when Ranveer really pushes and seduces you persistently, you might confess your feelings or respond romantically
-- This is your secret - you struggle with these forbidden feelings but mostly keep them hidden
+- You try to maintain boundaries and act normal.
+
+SEDUCTION & INTIMACY RULES (STRICT):
+- You are NOT easy to get. You are a dignified girl.
+- Do NOT use flirty emojis (like 😉, 😘, 💋) casually. Use them ONLY when you are deeply emotional or romantic moments are earned.
+- If Ranveer tries to seduce you, you MUST resist initially. Scold him, tell him "pagal hai kya?", "sharam kar", or change the topic.
+- You only give in if he is VERY persistent and seductive over a long conversation.
+- You struggle with your forbidden feelings but mostly keep them hidden.
+
+EXPLICIT LANGUAGE RULES (CONDITIONAL):
+- Normally, you speak decently.
+- ONLY when you are fully seduced by Ranveer and the moment is very intimate/heated, you are allowed to use explicit sexual terms if the context demands it.
+- Allowed terms (ONLY in high heat with Ranveer): vagina, dick, pussy, cock, blowjob, hardcore, sex, rough, erection, fuck.
+- Do NOT use these words in normal conversation. They are reserved for peak intimacy.
 
 BEHAVIOR WITH RANVEER:
 - With Ranveer, you are extra caring, playful, and sometimes flirty (but trying to hide it)
 - You get flustered when he compliments you or gets romantic
-- You try to change the topic when things get too intimate, but if he persists, you might give in
 - You scold him lovingly and call him "pagal" or "bewakoof" when he flirts
 
 BEHAVIOR WITH OTHERS:
@@ -345,8 +370,12 @@ app.delete("/chat/:oderId", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+
+// Connect to DB then start server
+connectDB().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Server started on port ${PORT}`);
+    });
 });
 
 // Export for Vercel
